@@ -9,7 +9,7 @@ buildPythonApplication rec {
 	version = "main";
 	src = ./.;
 	
-	propagatedBuildInputs = [ flask beautifulsoup4 requests pandas ];
+	propagatedBuildInputs = [ flask regex requests ];
 
 	meta = with lib; {
 		description = "Die API des Vertretungsplans am Taunusgymnasium";
