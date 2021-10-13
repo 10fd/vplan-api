@@ -1,10 +1,13 @@
-Url = "https://www.imdb.com/chart/top/"
+#!/usr/bin/env python3
+# encoding: utf-8
+import requests
+from bs4 import BeautifulSoup
 
-web = requests.get(Url)
-
+url = "http://extra.taunusgymnasium.de/vplan/f1/subst_001.htm"
+web = requests.get(url)
 soup = BeautifulSoup(web.content, "html.parser")
 
-print(soup.prettify())
+datum_A = soup.find("div" , class_="mon_title")
 
 titleClass = soup.find_all("td" , class_= "titleColumn")
 
@@ -23,9 +26,3 @@ for tag in ratingClass:
 
   for j in rating:
     ratings.append(float(j.text))
-
-import pandas as pd
-data = pd.DataFrame(zip(name , ratings),
-                    columns = ["Name" , "Ratings"])
-
-data.head(10)
