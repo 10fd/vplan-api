@@ -8,6 +8,6 @@ setup(name='vplan-api',
 	# Executables
 	scripts=[
 		"index.py",
-		"fetch.py",
+		"scraper.py",
 	],
 	)
