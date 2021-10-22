@@ -3,7 +3,7 @@
 import regex
 import requests
 
-url_heute = 'http://extra.taunusgymnasium.de/vplan/f2/subst_001.htm'
+url_heute = 'http://extra.taunusgymnasium.de/vplan/f1/subst_001.htm'
 url_morgen = 'http://extra.taunusgymnasium.de/vplan/f2/subst_001.htm'
 
 def getWebContent(url):
@@ -21,12 +21,10 @@ def getData(content):
             column = -1
             plan[recordno] = {}
     
-        result = regex.search(r"color: #010101\">(.{1,7})<", str)
+        result = regex.search(r"color: #010101\">(.*?)<", str)
         if result:
             column += 1
             plan[recordno][column] = result.groups(0)
-
-    print(recordno)
 
     for record in plan.items():
         print(record)
