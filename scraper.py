@@ -15,19 +15,22 @@ def getData(content):
     plan = {}
 
     for str in content.splitlines():
-        result = regex.search(r"<tr class='list (odd|even)'>", str)
+        arr = str.split('</span>')
+
+        result = regex.search(r"<tr class='list (odd|even)'>", arr[0])
         if result:
             recordno += 1
             column = -1
             plan[recordno] = {}
-    
-        result = regex.search(r"color: #010101\">(.*?)<", str)
-        if result:
-            column += 1
-            plan[recordno][column] = result.groups(0)
+        
+        for elem in arr:
+            result = regex.search(r"color: #010101\">(.*?)$", elem)
+            if result:
+                column += 1
+                plan[recordno][column] = result.groups(0)
 
     for record in plan.items():
         print(record)
 
 getData(getWebContent(url_heute))
-getData(getWebContent(url_morgen))
+#getData(getWebContent(url_morgen))
