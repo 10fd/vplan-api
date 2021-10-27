@@ -6,8 +6,5 @@ setup(name='vplan-api',
 	# Modules to import from other scripts:
 	packages=find_packages(),
 	# Executables
-	scripts=[
-		"index.py",
-		"scraper.py",
-	],
+	scripts=[ "scraper.py", ],
 	)
