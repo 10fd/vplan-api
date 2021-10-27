@@ -9,13 +9,11 @@ import json
 URL_HEUTE = 'http://extra.taunusgymnasium.de/vplan/f1/subst_001.htm'
 URL_MORGEN = 'http://extra.taunusgymnasium.de/vplan/f2/subst_001.htm'
 
-#PARSER_REGEX = '010101\"\>(.*)\<\/span\>.*010101\"\>(.*)\<\/span\>.*010101\"\>(.*)\<\/span\>.*010101\"\>(.*)\<\/span\>.*010101\"\>(.*)\<\/span\>.*010101\"\>(.*)\<\/span\>.*010101\"\>(.*)\<\/span\>.*'
 PARSER_REGEX = '((?:#.{6})\"(?:.{0,1})\>(?!<)(\&nbsp\;|.*?)(?:\<\/span\>){0,1}\<\/td\>){1}'
 
 app = flask.Flask(__name__)
-app.config["DEBUG"] = True # hier kann mit viel Bla in der Konsole abstellen
+app.config["DEBUG"] = True
 
-# Vertretungsplan bei jedem API-Call abrufen
 def get_schedule(day):
     status = 'Routine nicht initialisiert'
     lookup = ''
@@ -27,19 +25,16 @@ def get_schedule(day):
     if lookup == '':
         status = 'Tag nicht definiert'
     
-    # hier wird der Stundenplan abgerufen
-    # falls es beim Stundenplan-Server einen Fehler gibt, wird die Meldung in den Status weitergereicht
     # (untested, da momentan nur "heute" und "morgen" zugelassen sind -- wird sich beim ersten Ausfall des Servers zeigen)
     try:
         content = requests.get(lookup).text
         
-        # nur machen, wenn etwas drin steht
         if content:
             dictionary = {}
             entry = 0
             for line in content.splitlines():
                 parsed = regex.findall(PARSER_REGEX, line, overlapped=False)
-                # nur wenn der lange Regex gematcht wird:
+                
                 if parsed:
                     entry += 1
                     dictionary[entry] = {}
@@ -48,28 +43,32 @@ def get_schedule(day):
                     for items in parsed:
                         itemcnt += 1
                         
-                        if itemcnt == 1: 
-                            dictionary[entry]["Stunde"] = items[1]
-                        if itemcnt == 2:
-                            if items[1] == '&nbsp;':
-                                dictionary[entry]["Klasse"] = "PFUSCH"
+                        def dictvalue():
+                            if items[1] == '&nbsp;' or items[1] == '---':
+                                return ""
                             else:
-                                dictionary[entry]["Klasse"] = items[1]  
-                    #entry += 1
-                    #dictionary[entry] = {}
-                    #dictionary[entry]["Stunde"]   = parsed.group(1)
-                    #dictionary[entry]["Klasse"]   = parsed.group(2)
-                    #dictionary[entry]["Fach"]     = parsed.group(3)
-                    #dictionary[entry]["Raum"]     = parsed.group(4)
-                    #dictionary[entry]["Vertretung"] = parsed.group(5)
-                    #dictionary[entry]["Ver_Fach"] = parsed.group(6)
-                    #dictionary[entry]["Art"]      = parsed.group(7)                   
+                                return items[1]
+
+                        if itemcnt == 1: 
+                            dictionary[entry]["Stunde"] = dictvalue()
+                        if itemcnt == 2:
+                            dictionary[entry]["Klasse"] = dictvalue()
+                        if itemcnt == 3:
+                            dictionary[entry]["Fach"] = dictvalue()
+                        if itemcnt == 4:
+                            dictionary[entry]["Raum"] = dictvalue()
+                        if itemcnt == 5:
+                            dictionary[entry]["Vertretung"] = dictvalue()
+                        if itemcnt == 6:
+                            dictionary[entry]["Ver_Fach"] = dictvalue()
+                        if itemcnt == 7:
+                            dictionary[entry]["Art"] = dictvalue()
+
             status = json.dumps(dictionary)
  
     except requests.exceptions.RequestException as e:
         status = e
     
-    # Anmerkung: der lange result_json sieht im Browser komisch aus. Am besten mal per print() in der Konsole anschauen
     result_json = {'status': status}
     return result_json
 
@@ -77,7 +76,6 @@ def get_schedule(day):
 def home():
     return '''<h1>Sinnlos</h1><p>Nutze die API-URL für den Stundenplan.</p>'''
 
-# API-Endpoints definieren, letztes Element als Tag deklarieren und nachschauen
 @app.route('/api/v1/resources/stundenplan/heute', methods=['GET'])
 @app.route('/api/v1/resources/stundenplan/morgen', methods=['GET'])
 def api_all():
