@@ -7,7 +7,8 @@ import json
 URL_HEUTE = 'http://extra.taunusgymnasium.de/vplan/f1/subst_001.htm'
 URL_MORGEN = 'http://extra.taunusgymnasium.de/vplan/f2/subst_001.htm'
 
-PARSER_REGEX = '010101\"\>(.*)\<\/span\>.*010101\"\>(.*)\<\/span\>.*010101\"\>(.*)\<\/span\>.*010101\"\>(.*)\<\/span\>.*010101\"\>(.*)\<\/span\>.*010101\"\>(.*)\<\/span\>.*010101\"\>(.*)\<\/span\>.*'
+#PARSER_REGEX = '010101\"\>(.*)\<\/span\>.*010101\"\>(.*)\<\/span\>.*010101\"\>(.*)\<\/span\>.*010101\"\>(.*)\<\/span\>.*010101\"\>(.*)\<\/span\>.*010101\"\>(.*)\<\/span\>.*010101\"\>(.*)\<\/span\>.*'
+PARSER_REGEX = '((?:#.{6})\"(?:.{0,1})\>(?!<)(\&nbsp\;|.*?)(?:\<\/span\>){0,1}\<\/td\>){1}'
 
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True # hier kann mit viel Bla in der Konsole abstellen
@@ -35,19 +36,33 @@ def get_schedule(day):
             dictionary = {}
             entry = 0
             for line in content.splitlines():
-                parsed = regex.search(PARSER_REGEX, line)
+                parsed = regex.findall(PARSER_REGEX, line, overlapped=False)
                 # nur wenn der lange Regex gematcht wird:
                 if parsed:
                     entry += 1
                     dictionary[entry] = {}
-                    dictionary[entry]["Stunde"]   = parsed.group(1)
-                    dictionary[entry]["Klasse"]   = parsed.group(2)
-                    dictionary[entry]["Fach"]     = parsed.group(3)
-                    dictionary[entry]["Raum"]     = parsed.group(4)
-                    dictionary[entry]["Vertretung"] = parsed.group(5)
-                    dictionary[entry]["Ver_Fach"] = parsed.group(6)
-                    dictionary[entry]["Art"]      = parsed.group(7)                   
-                    status = json.dumps(dictionary)
+
+                    itemcnt = 0
+                    for items in parsed:
+                        itemcnt += 1
+                        
+                        if itemcnt == 1: 
+                            dictionary[entry]["Stunde"] = items[1]
+                        if itemcnt == 2:
+                            if items[1] == '&nbsp;':
+                                dictionary[entry]["Klasse"] = "PFUSCH"
+                            else:
+                                dictionary[entry]["Klasse"] = items[1]  
+                    #entry += 1
+                    #dictionary[entry] = {}
+                    #dictionary[entry]["Stunde"]   = parsed.group(1)
+                    #dictionary[entry]["Klasse"]   = parsed.group(2)
+                    #dictionary[entry]["Fach"]     = parsed.group(3)
+                    #dictionary[entry]["Raum"]     = parsed.group(4)
+                    #dictionary[entry]["Vertretung"] = parsed.group(5)
+                    #dictionary[entry]["Ver_Fach"] = parsed.group(6)
+                    #dictionary[entry]["Art"]      = parsed.group(7)                   
+            status = json.dumps(dictionary)
  
     except requests.exceptions.RequestException as e:
         status = e
